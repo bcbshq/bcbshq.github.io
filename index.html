@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Cybersecurity Threat Intelligence Database</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .tabs {
+            display: flex;
+            background-color: #e9ecef;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 3px solid #2a5298;
+            color: #2a5298;
+        }
+        .tab:hover {
+            background-color: #f8f9fa;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .filters {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-weight: 500;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .filter-group input, .filter-group select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .export-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        .export-btn:hover {
+            transform: translateY(-1px);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            background-color: white;
+        }
+        th {
+            background: linear-gradient(135deg, #343a40, #495057);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: top;
+        }
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .severity-critical { background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .severity-high { background-color: #fd7e14; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .severity-medium { background-color: #ffc107; color: black; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .severity-low { background-color: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .actor-type-ransomware { background-color: #e74c3c; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .actor-type-apt { background-color: #9b59b6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .actor-type-financial { background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .actor-type-crimeware { background-color: #34495e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 200px;
+        }
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .last-updated {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .description {
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Healthcare Cybersecurity Threat Intelligence Database</h1>
+            <p>Comprehensive threat landscape analysis for healthcare, healthcare providers, and insurance sectors</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('threat-actors', this)">Threat Actors</button>
+            <button class="tab" onclick="showTab('malware', this)">Malware Families</button>
+            <button class="tab" onclick="showTab('techniques', this)">MITRE ATT&CK TTPs</button>
+            <button class="tab" onclick="showTab('impact', this)">Attack Impact & Statistics</button>
+            <button class="tab" onclick="showTab('vectors', this)">Attack Vectors</button>
+        </div>
+
+        <!-- Threat Actors Tab -->
+        <div id="threat-actors" class="tab-content active">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="actor-filter">Filter by Actor Type:</label>
+                    <select id="actor-filter" onchange="filterTable('threat-actors-table', 2, this.value)">
+                        <option value="">All Types</option>
+                        <option value="Ransomware Group">Ransomware Group</option>
+                        <option value="Nation-State APT">Nation-State APT</option>
+                        <option value="Financial Crime">Financial Crime</option>
+                        <option value="Crimeware">Crimeware</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="origin-filter">Filter by Origin:</label>
+                    <select id="origin-filter" onchange="filterTable('threat-actors-table', 3, this.value)">
+                        <option value="">All Origins</option>
+                        <option value="Russia">Russia</option>
+                        <option value="China">China</option>
+                        <option value="North Korea">North Korea</option>
+                        <option value="Iran">Iran</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="search-actor">Search:</label>
+                    <input type="text" id="search-actor" placeholder="Search threat actors..." onkeyup="searchTable('threat-actors-table', this.value)">
+                </div>
+                <button class="export-btn" onclick="exportTableToCSV('threat-actors-table', 'threat-actors.csv')">Export CSV</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="threat-actors-table">
+                    <thead>
+                        <tr>
+                            <th>Threat Actor</th>
+                            <th>Alternative Names</th>
+                            <th>Type</th>
+                            <th>Origin</th>
+                            <th>Active Since</th>
+                            <th>Healthcare Targets (2024)</th>
+                            <th>Primary Motivation</th>
+                            <th>Notable Healthcare Attacks</th>
+                            <th>Key TTPs</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>LockBit 3.0</strong></td>
+                            <td>LockBit Black</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Russia</td>
+                            <td>2019</td>
+                            <td>52</td>
+                            <td>Financial</td>
+                            <td>Hospital de Canne Simone Veil, Community Clinic of Maui, University Hospital Center Zagreb</td>
+                            <td>RDP exploitation, Phishing, Public-facing app vulnerabilities, Drive-by compromises</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>INC Ransomware</strong></td>
+                            <td>N/A</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Unknown</td>
+                            <td>2023</td>
+                            <td>39</td>
+                            <td>Financial</td>
+                            <td>Multiple healthcare entities</td>
+                            <td>Double extortion, Data exfiltration</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RansomHub</strong></td>
+                            <td>N/A</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Unknown</td>
+                            <td>2024</td>
+                            <td>36</td>
+                            <td>Financial</td>
+                            <td>Change Healthcare (post-BlackCat)</td>
+                            <td>Phishing, Vulnerability exploitation</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BianLian</strong></td>
+                            <td>N/A</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Unknown</td>
+                            <td>2021</td>
+                            <td>31</td>
+                            <td>Financial</td>
+                            <td>Multiple healthcare organizations</td>
+                            <td>LOLBins, Fast encryption, Data exfiltration focus</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>QiLin</strong></td>
+                            <td>Agenda</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Unknown</td>
+                            <td>2022</td>
+                            <td>23</td>
+                            <td>Financial</td>
+                            <td>Global healthcare and critical sectors</td>
+                            <td>Double extortion, Network encryption</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BlackCat/ALPHV</strong></td>
+                            <td>Noberus</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Russia</td>
+                            <td>2021</td>
+                            <td>N/A (Exit scam March 2024)</td>
+                            <td>Financial</td>
+                            <td>Change Healthcare ($22M ransom), Jewish Home Lifecare, Valley Health Network</td>
+                            <td>Rust-based ransomware, Double extortion</td>
+                            <td>Defunct</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BlackBasta</strong></td>
+                            <td>Black Basta</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Russia</td>
+                            <td>2022</td>
+                            <td>Multiple</td>
+                            <td>Financial</td>
+                            <td>Ascension Healthcare (140 hospitals, 40 senior care facilities)</td>
+                            <td>Compromised credentials, Fast encryption</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Akira</strong></td>
+                            <td>N/A</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Unknown</td>
+                            <td>2023</td>
+                            <td>34</td>
+                            <td>Financial</td>
+                            <td>Multiple healthcare and financial organizations</td>
+                            <td>Compromised credentials, VPN vulnerabilities, RDP</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Interlock</strong></td>
+                            <td>N/A</td>
+                            <td><span class="actor-type-ransomware">Ransomware Group</span></td>
+                            <td>Unknown</td>
+                            <td>2024</td>
+                            <td>Multiple</td>
+                            <td>Financial</td>
+                            <td>DaVita, Kettering Health</td>
+                            <td>Drive-by downloads, Fake browser updates, Double extortion</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>APT29</strong></td>
+                            <td>Cozy Bear, Midnight Blizzard</td>
+                            <td><span class="actor-type-apt">Nation-State APT</span></td>
+                            <td>Russia</td>
+                            <td>2008</td>
+                            <td>Multiple</td>
+                            <td>Espionage</td>
+                            <td>Healthcare and pharmaceutical companies in U.S. and Europe</td>
+                            <td>Spearphishing, Password spraying, Supply chain compromise, WINELOADER malware</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lazarus Group</strong></td>
+                            <td>APT38, Hidden Cobra, Zinc</td>
+                            <td><span class="actor-type-apt">Nation-State APT</span></td>
+                            <td>North Korea</td>
+                            <td>2007</td>
+                            <td>Multiple</td>
+                            <td>Financial gain, Espionage</td>
+                            <td>COVID-19 vaccine research targets, pharmaceutical companies</td>
+                            <td>Spear-phishing, Malware disguised in image files, Watering-hole attacks</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UTA0178</strong></td>
+                            <td>Chinese actors</td>
+                            <td><span class="actor-type-apt">Nation-State APT</span></td>
+                            <td>China</td>
+                            <td>2023</td>
+                            <td>Multiple</td>
+                            <td>Espionage</td>
+                            <td>Healthcare sector via Ivanti vulnerabilities</td>
+                            <td>Living off the land, Webshells, Credential harvesting, Ivanti CVE exploitation</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lemon Sandstorm</strong></td>
+                            <td>N/A</td>
+                            <td><span class="actor-type-apt">Nation-State APT</span></td>
+                            <td>Iran</td>
+                            <td>2020</td>
+                            <td>Multiple</td>
+                            <td>Espionage, Geopolitical disruption</td>
+                            <td>Most active Iranian group targeting healthcare in 2024</td>
+                            <td>Advanced persistent threats, Network infiltration</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FIN7</strong></td>
+                            <td>Carbanak Group</td>
+                            <td><span class="actor-type-financial">Financial Crime</span></td>
+                            <td>Russia/Ukraine</td>
+                            <td>2012</td>
+                            <td>Multiple</td>
+                            <td>Financial</td>
+                            <td>Healthcare payment systems, POS terminals</td>
+                            <td>AvNeutralizer tool, SQL injection, NetSupport RAT, Malvertising</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wizard Spider</strong></td>
+                            <td>TrickBot, DEV-0193, UNC2053</td>
+                            <td><span class="actor-type-crimeware">Crimeware</span></td>
+                            <td>Russia</td>
+                            <td>2018</td>
+                            <td>Multiple</td>
+                            <td>Financial</td>
+                            <td>Three Minnesota medical facilities (2020), Universal Health Services</td>
+                            <td>TrickBot, Ryuk, Conti ransomware, BazarLoader</td>
+                            <td>Disrupted</td>
+                        </tr>
+                        <tr>
+                            <td><strong>APT28</strong></td>
+                            <td>Sofacy, Fancy Bear</td>
+                            <td><span class="actor-type-apt">Nation-State APT</span></td>
+                            <td>Russia</td>
+                            <td>2004</td>
+                            <td>Multiple</td>
+                            <td>Espionage</td>
+                            <td>Government and public sector healthcare systems</td>
+                            <td>Spear-phishing, Zero-day exploits, Credential harvesting</td>
+                            <td>Active</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Malware Families Tab -->
+        <div id="malware" class="tab-content">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="malware-type-filter">Filter by Type:</label>
+                    <select id="malware-type-filter" onchange="filterTable('malware-table', 1, this.value)">
+                        <option value="">All Types</option>
+                        <option value="Ransomware">Ransomware</option>
+                        <option value="Banking Trojan">Banking Trojan</option>
+                        <option value="Backdoor">Backdoor</option>
+                        <option value="Loader">Loader</option>
+                        <option value="Infostealer">Infostealer</option>
+                        <option value="RAT">RAT</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="search-malware">Search:</label>
+                    <input type="text" id="search-malware" placeholder="Search malware..." onkeyup="searchTable('malware-table', this.value)">
+                </div>
+                <button class="export-btn" onclick="exportTableToCSV('malware-table', 'malware-families.csv')">Export CSV</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="malware-table">
+                    <thead>
+                        <tr>
+                            <th>Malware Family</th>
+                            <th>Type</th>
+                            <th>First Seen</th>
+                            <th>Healthcare Impact</th>
+                            <th>Primary Capabilities</th>
+                            <th>Delivery Methods</th>
+                            <th>Associated Threat Actors</th>
+                            <th>Detection Difficulty</th>
+                            <th>Current Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>LockBit 3.0</strong></td>
+                            <td>Ransomware</td>
+                            <td>2019</td>
+                            <td><span class="severity-critical">Critical</span></td>
+                            <td>AES-256 encryption, Data exfiltration, Stealbit tool</td>
+                            <td>RDP exploitation, Phishing, Vulnerability exploitation</td>
+                            <td>LockBit 3.0 group</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BlackCat/ALPHV</strong></td>
+                            <td>Ransomware</td>
+                            <td>2021</td>
+                            <td><span class="severity-critical">Critical</span></td>
+                            <td>Rust-based, Cross-platform, Double extortion</td>
+                            <td>Compromised credentials, Network infiltration</td>
+                            <td>BlackCat/ALPHV group</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Defunct (Exit scam 2024)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Agent Tesla</strong></td>
+                            <td>Infostealer</td>
+                            <td>2014</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Credential harvesting, Keylogging, Screenshot capture</td>
+                            <td>Malspam, Malicious attachments</td>
+                            <td>Various cybercrime groups</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TrickBot</strong></td>
+                            <td>Banking Trojan</td>
+                            <td>2016</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Credential harvesting, Mail exfiltration, Cryptomining, Ransomware deployment</td>
+                            <td>Phishing campaigns, Malicious links/attachments</td>
+                            <td>Wizard Spider, Various affiliates</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Partially disrupted</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ryuk</strong></td>
+                            <td>Ransomware</td>
+                            <td>2018</td>
+                            <td><span class="severity-critical">Critical</span></td>
+                            <td>AES-256 encryption, RSA public key encryption, Backup deletion</td>
+                            <td>TrickBot deployment, BazarLoader, Compromised credentials</td>
+                            <td>Wizard Spider</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Less active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Conti</strong></td>
+                            <td>Ransomware</td>
+                            <td>2020</td>
+                            <td><span class="severity-critical">Critical</span></td>
+                            <td>Fast encryption, Double extortion, Lateral movement</td>
+                            <td>TrickBot, BazarLoader, Compromised RDP</td>
+                            <td>Wizard Spider</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Defunct (2022)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BazarLoader</strong></td>
+                            <td>Loader</td>
+                            <td>2020</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Payload delivery, C2 communication, Ransomware deployment</td>
+                            <td>Phishing emails, Google Drive links, Free file hosting</td>
+                            <td>Wizard Spider</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Less active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WINELOADER</strong></td>
+                            <td>Backdoor</td>
+                            <td>2024</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Custom backdoor, Data exfiltration, Persistence</td>
+                            <td>Supply chain compromise, Spearphishing</td>
+                            <td>APT29</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lumma Stealer</strong></td>
+                            <td>Infostealer</td>
+                            <td>2022</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Credential theft, Financial data collection, Cryptocurrency wallet data</td>
+                            <td>Dark Web distribution, Malware-as-a-Service</td>
+                            <td>Various cybercrime groups</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AsyncRAT</strong></td>
+                            <td>RAT</td>
+                            <td>2019</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Screen recording, Keylogging, File theft, Security software bypass</td>
+                            <td>Pirated software, AI-generated distribution scripts</td>
+                            <td>Various cybercrime groups</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>XWorm</strong></td>
+                            <td>RAT</td>
+                            <td>2022</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Remote control, Financial data collection, Clipboard manipulation</td>
+                            <td>CloudFlare tunnels, Legitimate infrastructure abuse</td>
+                            <td>Various cybercrime groups</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SocGholish</strong></td>
+                            <td>Loader</td>
+                            <td>2017</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>JavaScript downloader, Fake browser updates</td>
+                            <td>Malvertisement, Compromised websites</td>
+                            <td>Evil Corp</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cobalt Strike</strong></td>
+                            <td>Post-exploitation framework</td>
+                            <td>2012</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Lateral movement, Credential dumping, Command execution</td>
+                            <td>Legitimate tool abuse, Cracked versions</td>
+                            <td>Multiple ransomware groups</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Emotet</strong></td>
+                            <td>Banking Trojan</td>
+                            <td>2014</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Email harvesting, Credential theft, Malware delivery</td>
+                            <td>Phishing emails, Malicious macros</td>
+                            <td>Wizard Spider, Various affiliates</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Partially disrupted</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MITRE ATT&CK Techniques Tab -->
+        <div id="techniques" class="tab-content">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="tactic-filter">Filter by Tactic:</label>
+                    <select id="tactic-filter" onchange="filterTable('techniques-table', 2, this.value)">
+                        <option value="">All Tactics</option>
+                        <option value="Initial Access">Initial Access</option>
+                        <option value="Execution">Execution</option>
+                        <option value="Persistence">Persistence</option>
+                        <option value="Privilege Escalation">Privilege Escalation</option>
+                        <option value="Defense Evasion">Defense Evasion</option>
+                        <option value="Credential Access">Credential Access</option>
+                        <option value="Discovery">Discovery</option>
+                        <option value="Lateral Movement">Lateral Movement</option>
+                        <option value="Collection">Collection</option>
+                        <option value="Exfiltration">Exfiltration</option>
+                        <option value="Impact">Impact</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="search-technique">Search:</label>
+                    <input type="text" id="search-technique" placeholder="Search techniques..." onkeyup="searchTable('techniques-table', this.value)">
+                </div>
+                <button class="export-btn" onclick="exportTableToCSV('techniques-table', 'mitre-techniques.csv')">Export CSV</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="techniques-table">
+                    <thead>
+                        <tr>
+                            <th>Technique ID</th>
+                            <th>Technique Name</th>
+                            <th>Tactic</th>
+                            <th>Frequency in Healthcare</th>
+                            <th>Threat Actors Using</th>
+                            <th>Detection Methods</th>
+                            <th>Mitigation Strategies</th>
+                            <th>Healthcare-Specific Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>T1566</strong></td>
+                            <td>Phishing</td>
+                            <td>Initial Access</td>
+                            <td><span class="severity-critical">Critical (90%+)</span></td>
+                            <td>LockBit, BlackCat, APT29, Lazarus, All major ransomware groups</td>
+                            <td>Email security gateways, User training, URL inspection, Attachment analysis</td>
+                            <td>User awareness training, Email filtering, Multi-factor authentication</td>
+                            <td>Primary infection vector disrupting patient care systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1078</strong></td>
+                            <td>Valid Accounts</td>
+                            <td>Initial Access, Persistence, Privilege Escalation, Defense Evasion</td>
+                            <td><span class="severity-high">High (16%)</span></td>
+                            <td>Most ransomware groups, APT actors</td>
+                            <td>Behavioral analytics, Anomalous login detection, Privileged account monitoring</td>
+                            <td>Multi-factor authentication, Privileged access management, Account lifecycle management</td>
+                            <td>Unauthorized access to patient records and medical systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1486</strong></td>
+                            <td>Data Encrypted for Impact</td>
+                            <td>Impact</td>
+                            <td><span class="severity-critical">Critical</span></td>
+                            <td>All ransomware groups</td>
+                            <td>File integrity monitoring, Behavioral analysis, Ransomware signatures</td>
+                            <td>Backup strategies, Network segmentation, Endpoint protection</td>
+                            <td>Critical system downtime affecting patient care and life support</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1021</strong></td>
+                            <td>Remote Services</td>
+                            <td>Lateral Movement</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>LockBit, BlackBasta, Most ransomware groups</td>
+                            <td>Network monitoring, RDP logging, Unusual remote access patterns</td>
+                            <td>Network segmentation, VPN controls, Remote access policies</td>
+                            <td>Lateral spread across medical networks and EHR systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1190</strong></td>
+                            <td>Exploit Public-Facing Application</td>
+                            <td>Initial Access</td>
+                            <td><span class="severity-high">High (33%)</span></td>
+                            <td>APT29, UTA0178, Various ransomware groups</td>
+                            <td>Vulnerability scanning, Web application firewalls, Intrusion detection</td>
+                            <td>Patch management, Web application security, Regular vulnerability assessments</td>
+                            <td>Compromise of patient portals and healthcare web applications</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1204</strong></td>
+                            <td>User Execution</td>
+                            <td>Execution</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Most malware families</td>
+                            <td>Endpoint detection, Behavioral analysis, Application whitelisting</td>
+                            <td>User training, Application controls, Email security</td>
+                            <td>Healthcare staff inadvertently executing malicious files</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1547</strong></td>
+                            <td>Boot or Logon Autostart Execution</td>
+                            <td>Persistence</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Various malware families</td>
+                            <td>Registry monitoring, Startup program analysis, System configuration auditing</td>
+                            <td>System hardening, Registry protection, Startup monitoring</td>
+                            <td>Persistent access to medical workstations and servers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1562</strong></td>
+                            <td>Impair Defenses</td>
+                            <td>Defense Evasion</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Most ransomware groups, FIN7</td>
+                            <td>Security tool monitoring, Log analysis, System integrity checks</td>
+                            <td>Tamper protection, Redundant security controls, Centralized logging</td>
+                            <td>Disabling of medical device security and monitoring systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1055</strong></td>
+                            <td>Process Injection</td>
+                            <td>Defense Evasion, Privilege Escalation</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Advanced malware families</td>
+                            <td>Process monitoring, Memory analysis, Behavioral detection</td>
+                            <td>Endpoint protection, Process isolation, Code integrity</td>
+                            <td>Hiding malicious activity within legitimate medical software</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1056</strong></td>
+                            <td>Input Capture</td>
+                            <td>Credential Access</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Agent Tesla, AsyncRAT, Various infostealers</td>
+                            <td>Keystroke analysis, Input monitoring, Behavioral detection</td>
+                            <td>Virtual keyboards, Anti-keylogging, Credential protection</td>
+                            <td>Capturing healthcare provider credentials and patient data entry</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1003</strong></td>
+                            <td>OS Credential Dumping</td>
+                            <td>Credential Access</td>
+                            <td><span class="severity-high">High (25% increase)</span></td>
+                            <td>Cobalt Strike, Mimikatz users, Advanced attackers</td>
+                            <td>Memory protection, Credential monitoring, Anomalous access detection</td>
+                            <td>Credential Guard, LSASS protection, Privileged access management</td>
+                            <td>Harvesting credentials for healthcare system administrators</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1082</strong></td>
+                            <td>System Information Discovery</td>
+                            <td>Discovery</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Most threat actors</td>
+                            <td>Command execution monitoring, Process monitoring, Network monitoring</td>
+                            <td>System hardening, Access controls, Monitoring tools</td>
+                            <td>Reconnaissance of medical device networks and EHR systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1071</strong></td>
+                            <td>Application Layer Protocol</td>
+                            <td>Command and Control, Exfiltration</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Advanced persistent threats, Ransomware groups</td>
+                            <td>Network traffic analysis, Protocol inspection, Anomaly detection</td>
+                            <td>Network segmentation, Traffic filtering, Protocol monitoring</td>
+                            <td>Data exfiltration of patient records via common protocols</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1490</strong></td>
+                            <td>Inhibit System Recovery</td>
+                            <td>Impact</td>
+                            <td><span class="severity-critical">Critical</span></td>
+                            <td>Ransomware groups</td>
+                            <td>Backup monitoring, System recovery tracking, File deletion detection</td>
+                            <td>Immutable backups, Offline backups, Recovery testing</td>
+                            <td>Preventing recovery of critical patient care systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1489</strong></td>
+                            <td>Service Stop</td>
+                            <td>Impact</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Ransomware groups</td>
+                            <td>Service monitoring, Process monitoring, System event logging</td>
+                            <td>Service protection, Access controls, Redundant services</td>
+                            <td>Stopping critical healthcare services and medical device software</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Attack Impact & Statistics Tab -->
+        <div id="impact" class="tab-content">
+            <div class="stats-container">
+                <div class="stats-card">
+                    <h3>Total Healthcare Incidents (2024)</h3>
+                    <h2>444</h2>
+                    <p>238 Ransomware | 206 Data Breaches</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Average Breach Cost</h3>
+                    <h2>$9.77M</h2>
+                    <p>Highest among all industries (14th consecutive year)</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Organizations Attacked</h3>
+                    <h2>92%</h2>
+                    <p>Of healthcare orgs experienced cyberattacks in 2024</p>
+                </div>
+                <div class="stats-card">
+                    <h3>People Affected</h3>
+                    <h2>182.4M</h2>
+                    <p>Major health data breaches in 2024</p>
+                </div>
+            </div>
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="search-impact">Search:</label>
+                    <input type="text" id="search-impact" placeholder="Search incidents..." onkeyup="searchTable('impact-table', this.value)">
+                </div>
+                <button class="export-btn" onclick="exportTableToCSV('impact-table', 'attack-impact.csv')">Export CSV</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="impact-table">
+                    <thead>
+                        <tr>
+                            <th>Organization/Incident</th>
+                            <th>Date</th>
+                            <th>Attack Type</th>
+                            <th>Threat Actor</th>
+                            <th>Records Compromised</th>
+                            <th>Financial Impact</th>
+                            <th>Operational Impact</th>
+                            <th>Recovery Time</th>
+                            <th>Patient Care Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Change Healthcare</strong></td>
+                            <td>Feb 2024</td>
+                            <td>Ransomware</td>
+                            <td>BlackCat/ALPHV</td>
+                            <td>100M+</td>
+                            <td>$2.9B+ losses, $22M ransom paid</td>
+                            <td>Complete system shutdown, nationwide billing disruption</td>
+                            <td>Several weeks</td>
+                            <td>Critical - nationwide impact on prescription access, provider payments</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ascension Healthcare</strong></td>
+                            <td>Apr 2024</td>
+                            <td>Ransomware</td>
+                            <td>BlackBasta</td>
+                            <td>5.6M</td>
+                            <td>Estimated $100M+</td>
+                            <td>140 hospitals affected, 40 senior care facilities</td>
+                            <td>Several weeks</td>
+                            <td>Severe - ambulance diversions, EHR inaccessible, delayed care</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Yale New Haven Health</strong></td>
+                            <td>2025</td>
+                            <td>Data Breach</td>
+                            <td>Unknown</td>
+                            <td>5.5M</td>
+                            <td>Under investigation</td>
+                            <td>IT systems affected</td>
+                            <td>Ongoing</td>
+                            <td>Moderate - affected patient data access</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DaVita</strong></td>
+                            <td>Apr 2024</td>
+                            <td>Ransomware</td>
+                            <td>Interlock</td>
+                            <td>Under investigation</td>
+                            <td>Under investigation</td>
+                            <td>On-premises systems encrypted</td>
+                            <td>Under investigation</td>
+                            <td>Moderate - dialysis service disruptions</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MediSecure (Australia)</strong></td>
+                            <td>2024</td>
+                            <td>Ransomware</td>
+                            <td>Unknown</td>
+                            <td>12.3M</td>
+                            <td>Company closure</td>
+                            <td>Complete business shutdown</td>
+                            <td>Permanent</td>
+                            <td>Critical - prescription delivery service eliminated</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Acadian Ambulance</strong></td>
+                            <td>2024</td>
+                            <td>Ransomware</td>
+                            <td>Unknown</td>
+                            <td>2.9M</td>
+                            <td>Estimated $10M+</td>
+                            <td>Emergency services disrupted</td>
+                            <td>Several weeks</td>
+                            <td>Critical - emergency response delays</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rite Aid</strong></td>
+                            <td>2024</td>
+                            <td>Data Breach</td>
+                            <td>Unknown</td>
+                            <td>2.2M</td>
+                            <td>Under investigation</td>
+                            <td>Pharmacy systems affected</td>
+                            <td>Several weeks</td>
+                            <td>Moderate - prescription service disruptions</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Regional Cancer Center (India)</strong></td>
+                            <td>Apr 2024</td>
+                            <td>Ransomware</td>
+                            <td>Unknown</td>
+                            <td>Unknown</td>
+                            <td>$100M ransom demand (highest of 2024)</td>
+                            <td>Cancer treatment systems affected</td>
+                            <td>Under investigation</td>
+                            <td>Critical - cancer patient care disrupted</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Universal Health Services</strong></td>
+                            <td>Sep 2020</td>
+                            <td>Ransomware</td>
+                            <td>Ryuk/Wizard Spider</td>
+                            <td>Unknown</td>
+                            <td>$67M+ recovery costs</td>
+                            <td>400+ facilities affected nationwide</td>
+                            <td>Several weeks</td>
+                            <td>Severe - surgeries postponed, manual processes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hospital de Canne Simone Veil</strong></td>
+                            <td>2024</td>
+                            <td>Ransomware</td>
+                            <td>LockBit 3.0</td>
+                            <td>Unknown</td>
+                            <td>Under investigation</td>
+                            <td>Hospital operations disrupted</td>
+                            <td>Several weeks</td>
+                            <td>Moderate to severe</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Community Clinic of Maui</strong></td>
+                            <td>2024</td>
+                            <td>Ransomware</td>
+                            <td>LockBit 3.0</td>
+                            <td>Unknown</td>
+                            <td>Under investigation</td>
+                            <td>Clinic operations affected</td>
+                            <td>Under investigation</td>
+                            <td>Moderate</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kettering Health</strong></td>
+                            <td>2024</td>
+                            <td>Ransomware</td>
+                            <td>Interlock</td>
+                            <td>Unknown</td>
+                            <td>Under investigation</td>
+                            <td>Multi-facility health system affected</td>
+                            <td>Under investigation</td>
+                            <td>Moderate to severe</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Attack Vectors Tab -->
+        <div id="vectors" class="tab-content">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="search-vector">Search:</label>
+                    <input type="text" id="search-vector" placeholder="Search vectors..." onkeyup="searchTable('vectors-table', this.value)">
+                </div>
+                <button class="export-btn" onclick="exportTableToCSV('vectors-table', 'attack-vectors.csv')">Export CSV</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="vectors-table">
+                    <thead>
+                        <tr>
+                            <th>Attack Vector</th>
+                            <th>Frequency (%)</th>
+                            <th>Severity</th>
+                            <th>Primary Methods</th>
+                            <th>Threat Actors Using</th>
+                            <th>Healthcare-Specific Targets</th>
+                            <th>Detection Strategies</th>
+                            <th>Prevention Measures</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Phishing/Social Engineering</strong></td>
+                            <td>90%+</td>
+                            <td><span class="severity-critical">Critical</span></td>
+                            <td>Email phishing, Spear-phishing, Business Email Compromise (BEC), SMS phishing</td>
+                            <td>All major threat actors</td>
+                            <td>Healthcare staff, Administrators, C-level executives</td>
+                            <td>Email security gateways, User behavior analytics, Threat intelligence</td>
+                            <td>Security awareness training, Email filtering, Multi-factor authentication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vulnerability Exploitation</strong></td>
+                            <td>33%</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Public-facing application exploits, Unpatched systems, Zero-day exploits</td>
+                            <td>APT groups, Ransomware operators</td>
+                            <td>Web portals, VPN endpoints, Medical device interfaces</td>
+                            <td>Vulnerability scanning, Patch management monitoring, Intrusion detection</td>
+                            <td>Regular patching, Vulnerability management, Network segmentation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Stolen Credentials</strong></td>
+                            <td>16%</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Credential stuffing, Password spraying, Purchased credentials</td>
+                            <td>Most ransomware groups, APT actors</td>
+                            <td>Administrative accounts, Service accounts, Medical staff credentials</td>
+                            <td>Anomalous login detection, Credential monitoring, Dark web monitoring</td>
+                            <td>Multi-factor authentication, Password policies, Privileged access management</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Remote Access Compromise</strong></td>
+                            <td>75% of incidents</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>VPN exploitation, RDP attacks, Remote access tool abuse</td>
+                            <td>Ransomware groups, APT actors</td>
+                            <td>Remote work infrastructure, Medical device remote access</td>
+                            <td>Remote access monitoring, VPN logging, Behavioral analytics</td>
+                            <td>VPN security, Remote access policies, Network segmentation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Malvertising</strong></td>
+                            <td>Variable</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Malicious advertisements, Drive-by downloads, Fake browser updates</td>
+                            <td>SocGholish, Interlock, Various crimeware</td>
+                            <td>Staff browsing, Administrative workstations</td>
+                            <td>Web filtering, Ad blockers, Behavioral detection</td>
+                            <td>Web security, User training, Endpoint protection</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Supply Chain Attacks</strong></td>
+                            <td>30% breach involvement</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Third-party compromise, Software supply chain, Vendor access abuse</td>
+                            <td>APT groups, Advanced ransomware operators</td>
+                            <td>EHR vendors, Medical device manufacturers, IT service providers</td>
+                            <td>Vendor monitoring, Supply chain visibility, Third-party assessments</td>
+                            <td>Vendor security requirements, Contract security clauses, Supply chain risk management</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Malicious Attachments</strong></td>
+                            <td>Variable</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Malicious documents, Macro-enabled files, Archive files with malware</td>
+                            <td>Banking trojans, Ransomware groups</td>
+                            <td>Administrative staff, Finance departments, General users</td>
+                            <td>Email attachment scanning, Sandboxing, Behavioral analysis</td>
+                            <td>Email security, User training, Application controls</td>
+                        </tr>
+                        <tr>
+                            <td><strong>USB/Removable Media</strong></td>
+                            <td>Low but high impact</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Infected USB drives, AutoRun exploitation, Social engineering</td>
+                            <td>APT groups, Targeted attackers</td>
+                            <td>Medical devices, Isolated networks, Administrative workstations</td>
+                            <td>USB monitoring, Device control, Endpoint detection</td>
+                            <td>USB policies, Device controls, User awareness</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Internet of Medical Things (IoMT)</strong></td>
+                            <td>57% vulnerable devices</td>
+                            <td><span class="severity-high">High</span></td>
+                            <td>Device default credentials, Unpatched firmware, Network protocols</td>
+                            <td>Ransomware groups, APT actors</td>
+                            <td>Medical devices, Patient monitoring systems, Infusion pumps</td>
+                            <td>Device discovery, Network monitoring, Asset management</td>
+                            <td>Device security policies, Network segmentation, Device lifecycle management</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Insider Threats</strong></td>
+                            <td>26% (human error) + malicious</td>
+                            <td><span class="severity-medium">Medium</span></td>
+                            <td>Privileged access abuse, Data theft, Sabotage, Unintentional exposure</td>
+                            <td>Nation-state operatives, Disgruntled employees</td>
+                            <td>High-privilege accounts, Patient data access, Critical systems</td>
+                            <td>User behavior analytics, Privileged access monitoring, Data loss prevention</td>
+                            <td>Access controls, Background checks, Insider threat programs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            <p><strong>Last Updated:</strong> July 2025 | <strong>Data Sources:</strong> Health-ISAC, FBI/CISA Advisories, IBM, Verizon DBIR, Microsoft Threat Intelligence, MITRE ATT&CK</p>
+            <p><strong>Coverage:</strong> Healthcare, Healthcare Providers, Insurance Providers | <strong>Geographic Scope:</strong> Global with US focus</p>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName, clickedTab) {
+            // Hide all tab contents
+            const contents = document.getElementsByClassName('tab-content');
+            for (let content of contents) {
+                content.classList.remove('active');
+            }
+            
+            // Remove active class from all tabs
+            const tabs = document.getElementsByClassName('tab');
+            for (let tab of tabs) {
+                tab.classList.remove('active');
+            }
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            clickedTab.classList.add('active');
+        }
+
+        function filterTable(tableId, columnIndex, filterValue) {
+            const table = document.getElementById(tableId);
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                if (filterValue === '' || row.cells[columnIndex].textContent.toLowerCase().includes(filterValue.toLowerCase())) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+
+        function searchTable(tableId, searchValue) {
+            const table = document.getElementById(tableId);
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            const search = searchValue.toLowerCase();
+            
+            for (let row of rows) {
+                let found = false;
+                for (let cell of row.cells) {
+                    if (cell.textContent.toLowerCase().includes(search)) {
+                        found = true;
+                        break;
+                    }
+                }
+                row.style.display = found ? '' : 'none';
+            }
+        }
+
+        function exportTableToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            const rows = table.querySelectorAll('tr:not([style*="display: none"])');
+            let csv = [];
+            
+            for (let row of rows) {
+                let csvRow = [];
+                for (let cell of row.cells) {
+                    // Clean cell content and escape quotes
+                    let cellText = cell.textContent.replace(/"/g, '""');
+                    csvRow.push('"' + cellText + '"');
+                }
+                csv.push(csvRow.join(','));
+            }
+            
+            // Create download link
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Initialize with first tab active
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstTab = document.querySelector('.tab');
+            showTab('threat-actors', firstTab);
+        });
+    </script>
+</body>
+</html>
