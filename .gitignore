@@ -38,12 +38,12 @@ ves-env/
 *.code-workspace
 
 # Data and logs
-data/
-/data/processed/
-/data/archive/
-logs/
-*.log
-/*.log
+# data/
+# /data/processed/
+# /data/archive/
+# logs/
+# *.log
+# /*.log
 
 # Database
 *.db

@@ -1,0 +1,249 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Healthcare Security Incident Schema",
+  "description": "Schema for healthcare security incident reporting",
+  "type": "object",
+  "required": ["metadata", "dataType", "data"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["version", "org", "submissionDate"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Schema version (e.g., '1.0')"
+        },
+        "org": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Submitting organization identifier"
+        },
+        "submissionDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of submission"
+        },
+        "reportingPeriod": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "classification": {
+          "type": "string",
+          "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"],
+          "default": "TLP:AMBER",
+          "description": "Default AMBER for incident data"
+        },
+        "dataSource": {
+          "type": "string",
+          "description": "Source of incident data"
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "dataType": {
+      "type": "string",
+      "const": "incident"
+    },
+    "data": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "sector", "attackType", "org", "telemetryDate"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^inc-\\d{4}-\\d{3}$|^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "description": "Unique incident identifier"
+          },
+          "organization": {
+            "type": "string",
+            "description": "Affected organization (anonymized if needed)"
+          },
+          "sector": {
+            "type": "string",
+            "enum": ["hospital", "insurance", "pharma", "medical_device", "clinic", "laboratory", "other"],
+            "description": "Healthcare sector category"
+          },
+          "incidentDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the incident occurred"
+          },
+          "discoveryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the incident was discovered"
+          },
+          "containmentDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the incident was contained"
+          },
+          "resolutionDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the incident was fully resolved"
+          },
+          "attackType": {
+            "type": "string",
+            "enum": [
+              "ransomware",
+              "data_breach",
+              "supply_chain",
+              "insider",
+              "phishing",
+              "ddos",
+              "malware",
+              "cryptojacking",
+              "other"
+            ],
+            "description": "Primary attack type"
+          },
+          "actorId": {
+            "type": "string",
+            "description": "Associated threat actor ID if known"
+          },
+          "actor": {
+            "type": "string",
+            "description": "Threat actor name if known"
+          },
+          "malwareId": {
+            "type": "string",
+            "description": "Associated malware ID if applicable"
+          },
+          "techniquesUsed": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^T\\d{4}(\\.\\d{3})?$"
+            },
+            "description": "MITRE ATT&CK techniques observed"
+          },
+          "recordsCompromised": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of patient/customer records affected"
+          },
+          "financialImpact": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Estimated financial impact in USD"
+          },
+          "operationalImpact": {
+            "type": "object",
+            "properties": {
+              "systemsAffected": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of systems affected"
+              },
+              "downtime": {
+                "type": "number",
+                "minimum": 0,
+                "description": "System downtime in hours"
+              },
+              "servicesImpacted": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of impacted services"
+              },
+              "dataLoss": {
+                "type": "boolean",
+                "description": "Whether permanent data loss occurred"
+              }
+            }
+          },
+          "patientCareImpact": {
+            "type": "string",
+            "enum": ["critical", "severe", "moderate", "minimal", "none", "unknown"],
+            "description": "Impact on patient care delivery"
+          },
+          "regulatoryImpact": {
+            "type": "object",
+            "properties": {
+              "hipaaReportable": {
+                "type": "boolean",
+                "description": "Whether incident is HIPAA reportable"
+              },
+              "hhsNotified": {
+                "type": "boolean",
+                "description": "Whether HHS was notified"
+              },
+              "stateNotified": {
+                "type": "boolean",
+                "description": "Whether state authorities were notified"
+              },
+              "lawEnforcementNotified": {
+                "type": "boolean",
+                "description": "Whether law enforcement was notified"
+              },
+              "notificationDate": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "responseActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Actions taken in response to incident"
+          },
+          "lessonsLearned": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Key lessons from incident"
+          },
+          "preventiveMeasures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Measures implemented to prevent recurrence"
+          },
+          "dataSource": {
+            "type": "string",
+            "description": "Source of incident data"
+          },
+          "org": {
+            "type": "string",
+            "description": "Reporting organization"
+          },
+          "telemetryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the incident data was collected"
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000,
+            "description": "Additional incident details or context"
+          }
+        }
+      }
+    }
+  }
+}

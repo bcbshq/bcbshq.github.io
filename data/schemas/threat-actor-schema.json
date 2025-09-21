@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Threat Actor Intelligence Schema",
+  "description": "Schema for healthcare threat actor intelligence submissions",
+  "type": "object",
+  "required": ["metadata", "dataType", "data"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["version", "org", "submissionDate"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Schema version (e.g., '1.0')"
+        },
+        "org": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Submitting organization identifier"
+        },
+        "submissionDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of submission"
+        },
+        "reportingPeriod": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "classification": {
+          "type": "string",
+          "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"],
+          "default": "TLP:GREEN"
+        },
+        "dataSource": {
+          "type": "string",
+          "description": "Source of the telemetry data"
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "dataType": {
+      "type": "string",
+      "const": "threatActor"
+    },
+    "data": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "org", "telemetryDate"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ta-\\d{4}-\\d{3}$|^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "description": "Unique identifier (ta-YYYY-NNN or UUID)"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Primary threat actor name"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "description": "Alternative names/aliases"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["ransomware", "apt", "financial", "crimeware", "hacktivist", "insider", "unknown"],
+            "description": "Threat actor category"
+          },
+          "origin": {
+            "type": "string",
+            "description": "Geographic origin or attribution"
+          },
+          "firstSeen": {
+            "type": "string",
+            "format": "date-time",
+            "description": "First observation timestamp"
+          },
+          "lastSeen": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Most recent observation"
+          },
+          "targetedSectors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["healthcare", "insurance", "pharma", "medical_device", "clinic", "laboratory", "other"]
+            }
+          },
+          "healthcareTargets": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of known healthcare targets"
+          },
+          "motivation": {
+            "type": "string",
+            "enum": ["financial", "espionage", "disruption", "hacktivism", "unknown"]
+          },
+          "confidence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Confidence score (0-100)"
+          },
+          "ttps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^T\\d{4}(\\.\\d{3})?$|^.+$",
+              "description": "MITRE ATT&CK technique IDs or descriptions"
+            }
+          },
+          "malwareUsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Associated malware families"
+          },
+          "infrastructure": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["c2", "exfiltration", "staging", "phishing", "unknown"]
+                },
+                "value": {
+                  "type": "string",
+                  "description": "IP, domain, or URL (defanged)"
+                },
+                "firstSeen": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "lastSeen": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["active", "inactive", "unknown"]
+                }
+              }
+            }
+          },
+          "dataSource": {
+            "type": "string",
+            "description": "Telemetry source (e.g., edr-telemetry, network-telemetry)"
+          },
+          "org": {
+            "type": "string",
+            "description": "Organization that observed this actor"
+          },
+          "telemetryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the telemetry was collected"
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Additional observations or context"
+          }
+        }
+      }
+    }
+  }
+}

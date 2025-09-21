@@ -1,0 +1,16 @@
+{
+  "processedDate": "2025-09-21T19:27:04.448Z",
+  "period": "monthly",
+  "orgs": [
+    "org-a",
+    "org-b",
+    "org-c"
+  ],
+  "recordCounts": {
+    "threatActors": 2,
+    "malware": 2,
+    "techniques": 0,
+    "incidents": 0,
+    "attackVectors": 0
+  }
+}

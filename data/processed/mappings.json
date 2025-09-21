@@ -1,0 +1,30 @@
+[
+  {
+    "actorId": "ta-2025-001",
+    "actorName": "LockBit 3.0",
+    "actorType": "ransomware",
+    "malware": [
+      {
+        "id": "mw-2025-001",
+        "name": "LockBit 3.0",
+        "type": "ransomware"
+      }
+    ],
+    "techniques": [],
+    "incidents": []
+  },
+  {
+    "actorId": "ta-2025-002",
+    "actorName": "APT29",
+    "actorType": "apt",
+    "malware": [
+      {
+        "id": "mw-2025-002",
+        "name": "WINELOADER",
+        "type": "backdoor"
+      }
+    ],
+    "techniques": [],
+    "incidents": []
+  }
+]

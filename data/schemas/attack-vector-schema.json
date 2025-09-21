@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Attack Vector Intelligence Schema",
+  "description": "Schema for healthcare attack vector analysis and patterns",
+  "type": "object",
+  "required": ["metadata", "dataType", "data"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["version", "org", "submissionDate"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Schema version (e.g., '1.0')"
+        },
+        "org": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Submitting organization identifier"
+        },
+        "submissionDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of submission"
+        },
+        "reportingPeriod": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "classification": {
+          "type": "string",
+          "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"],
+          "default": "TLP:GREEN"
+        },
+        "dataSource": {
+          "type": "string",
+          "description": "Source of attack vector analysis"
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "dataType": {
+      "type": "string",
+      "const": "attackVector"
+    },
+    "data": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["vectorType", "frequency", "severity", "org", "telemetryDate"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^av-\\d{4}-\\d{3}$|^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "description": "Unique vector identifier"
+          },
+          "vectorType": {
+            "type": "string",
+            "enum": [
+              "phishing_email",
+              "phishing_voice",
+              "phishing_sms",
+              "vulnerability_exploitation",
+              "stolen_credentials",
+              "supply_chain",
+              "insider_threat",
+              "physical_access",
+              "remote_access",
+              "web_application",
+              "api_exploitation",
+              "social_engineering",
+              "malicious_usb",
+              "network_scanning",
+              "brute_force",
+              "password_spraying",
+              "other"
+            ],
+            "description": "Primary attack vector type"
+          },
+          "frequency": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of observations in reporting period"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Severity assessment"
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific methods observed for this vector"
+          },
+          "actorsUsing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Threat actors observed using this vector"
+          },
+          "targetedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "email_systems",
+                "vpn",
+                "rdp",
+                "web_applications",
+                "medical_devices",
+                "ehr_systems",
+                "workstations",
+                "servers",
+                "cloud_services",
+                "iot_devices",
+                "network_infrastructure",
+                "backup_systems",
+                "payment_systems",
+                "other"
+              ]
+            },
+            "description": "Systems/assets targeted by this vector"
+          },
+          "successRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Estimated success rate percentage"
+          },
+          "preventionMeasures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Implemented prevention measures"
+          },
+          "detectionStrategies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Detection methods for this vector"
+          },
+          "indicators": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["pattern", "behavior", "signature", "anomaly", "other"]
+                },
+                "value": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              }
+            },
+            "description": "Specific indicators for this vector"
+          },
+          "exploitedVulnerabilities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cve": {
+                  "type": "string",
+                  "pattern": "^CVE-\\d{4}-\\d{4,}$"
+                },
+                "cvss": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10
+                },
+                "product": {
+                  "type": "string"
+                },
+                "vendor": {
+                  "type": "string"
+                },
+                "patchAvailable": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": "CVEs exploited via this vector"
+          },
+          "impactMetrics": {
+            "type": "object",
+            "properties": {
+              "incidentsResulting": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of incidents from this vector"
+              },
+              "averageDwellTime": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Average dwell time in hours"
+              },
+              "dataExfiltrated": {
+                "type": "boolean",
+                "description": "Whether data exfiltration occurred"
+              },
+              "ransomwareDeployed": {
+                "type": "boolean",
+                "description": "Whether ransomware was deployed"
+              }
+            }
+          },
+          "trends": {
+            "type": "object",
+            "properties": {
+              "increasing": {
+                "type": "boolean",
+                "description": "Whether usage is increasing"
+              },
+              "percentChange": {
+                "type": "number",
+                "description": "Percentage change from previous period"
+              },
+              "seasonality": {
+                "type": "string",
+                "description": "Seasonal patterns observed"
+              }
+            }
+          },
+          "riskScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Calculated risk score (0-100)"
+          },
+          "dataSource": {
+            "type": "string",
+            "description": "Source of vector analysis"
+          },
+          "org": {
+            "type": "string",
+            "description": "Organization observing this vector"
+          },
+          "telemetryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the telemetry was collected"
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Additional observations or context"
+          }
+        }
+      }
+    }
+  }
+}

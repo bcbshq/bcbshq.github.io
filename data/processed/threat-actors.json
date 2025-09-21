@@ -1,0 +1,98 @@
+[
+  {
+    "id": "ta-2025-001",
+    "name": "LockBit 3.0",
+    "aliases": [
+      "LockBit Black",
+      "ABCD Group"
+    ],
+    "type": "ransomware",
+    "origin": "Russia",
+    "firstSeen": "2024-12-15T08:30:00Z",
+    "lastSeen": "2025-01-14T16:45:00Z",
+    "targetedSectors": [
+      "healthcare",
+      "insurance",
+      "pharma"
+    ],
+    "healthcareTargets": 3,
+    "motivation": "financial",
+    "confidence": 85,
+    "ttps": [
+      "T1566",
+      "T1486",
+      "T1078",
+      "T1021.001"
+    ],
+    "malwareUsed": [
+      "LockBit 3.0"
+    ],
+    "infrastructure": [
+      {
+        "type": "c2",
+        "value": "evil.example[.]com",
+        "firstSeen": "2025-01-10T00:00:00Z",
+        "lastSeen": "2025-01-14T00:00:00Z",
+        "status": "active"
+      }
+    ],
+    "dataSource": "edr-telemetry",
+    "org": "org-name",
+    "telemetryDate": "2025-01-14T16:45:00Z",
+    "classification": "TLP:GREEN",
+    "notes": "Observed targeting backup servers before encryption",
+    "subsidiary": "org-a",
+    "sourceFile": "2025-01-actors.json",
+    "extractedAt": "2025-09-21T19:27:04.442Z",
+    "lastUpdated": "2025-09-21T19:27:04.446Z",
+    "reportingPeriod": "2025-01",
+    "orgsReporting": [
+      "org-a"
+    ],
+    "observationCount": 1
+  },
+  {
+    "id": "ta-2025-002",
+    "name": "APT29",
+    "aliases": [
+      "Cozy Bear",
+      "Midnight Blizzard"
+    ],
+    "type": "apt",
+    "origin": "Russia",
+    "firstSeen": "2024-11-01T00:00:00Z",
+    "lastSeen": "2025-01-13T00:00:00Z",
+    "targetedSectors": [
+      "healthcare",
+      "pharma"
+    ],
+    "healthcareTargets": 1,
+    "motivation": "espionage",
+    "confidence": 70,
+    "ttps": [
+      "T1566.001",
+      "T1078",
+      "T1098",
+      "T1059.001"
+    ],
+    "malwareUsed": [
+      "WINELOADER",
+      "Custom Backdoor"
+    ],
+    "infrastructure": [],
+    "dataSource": "network-telemetry",
+    "org": "org-name",
+    "telemetryDate": "2025-01-13T00:00:00Z",
+    "classification": "TLP:GREEN",
+    "notes": "Focus on pharmaceutical research data",
+    "subsidiary": "org-a",
+    "sourceFile": "2025-01-actors.json",
+    "extractedAt": "2025-09-21T19:27:04.442Z",
+    "lastUpdated": "2025-09-21T19:27:04.446Z",
+    "reportingPeriod": "2025-01",
+    "orgsReporting": [
+      "org-a"
+    ],
+    "observationCount": 1
+  }
+]

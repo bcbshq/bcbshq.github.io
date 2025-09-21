@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MITRE ATT&CK Technique Schema",
+  "description": "Schema for observed MITRE ATT&CK techniques in healthcare environments",
+  "type": "object",
+  "required": ["metadata", "dataType", "data"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["version", "org", "submissionDate"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Schema version (e.g., '1.0')"
+        },
+        "org": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Submitting organization identifier"
+        },
+        "submissionDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of submission"
+        },
+        "reportingPeriod": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "classification": {
+          "type": "string",
+          "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"],
+          "default": "TLP:GREEN"
+        },
+        "dataSource": {
+          "type": "string",
+          "description": "Source of technique observations"
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "dataType": {
+      "type": "string",
+      "const": "technique"
+    },
+    "data": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["techniqueId", "name", "tactic", "org", "telemetryDate"],
+        "properties": {
+          "techniqueId": {
+            "type": "string",
+            "pattern": "^T\\d{4}(\\.\\d{3})?$",
+            "description": "MITRE ATT&CK technique ID (e.g., T1566, T1566.001)"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Technique name from MITRE ATT&CK"
+          },
+          "tactic": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "Initial Access",
+                "Execution",
+                "Persistence",
+                "Privilege Escalation",
+                "Defense Evasion",
+                "Credential Access",
+                "Discovery",
+                "Lateral Movement",
+                "Collection",
+                "Command and Control",
+                "Exfiltration",
+                "Impact"
+              ]
+            },
+            "description": "Associated ATT&CK tactics"
+          },
+          "observedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this technique was observed"
+          },
+          "actorId": {
+            "type": "string",
+            "description": "Associated threat actor ID"
+          },
+          "malwareId": {
+            "type": "string",
+            "description": "Associated malware ID"
+          },
+          "frequency": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of times observed in reporting period"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Severity assessment of this technique"
+          },
+          "detectionMethods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "How this technique was detected"
+          },
+          "mitigationStrategies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Implemented or recommended mitigations"
+          },
+          "targetedSystems": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "workstations",
+                "servers",
+                "domain_controllers",
+                "medical_devices",
+                "ehr_systems",
+                "backup_systems",
+                "network_infrastructure",
+                "cloud_services",
+                "other"
+              ]
+            }
+          },
+          "indicators": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["process", "network", "file", "registry", "service", "scheduled_task", "wmi", "other"]
+                },
+                "value": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Specific indicators of this technique"
+          },
+          "killChainPhase": {
+            "type": "string",
+            "enum": [
+              "reconnaissance",
+              "weaponization",
+              "delivery",
+              "exploitation",
+              "installation",
+              "command_and_control",
+              "actions_on_objectives"
+            ],
+            "description": "Cyber Kill Chain phase"
+          },
+          "dataSource": {
+            "type": "string",
+            "description": "Detection source (e.g., siem-correlation, edr-telemetry)"
+          },
+          "org": {
+            "type": "string",
+            "description": "Organization that observed this technique"
+          },
+          "telemetryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the telemetry was collected"
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER", "TLP:RED"]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Additional context or observations"
+          }
+        }
+      }
+    }
+  }
+}
