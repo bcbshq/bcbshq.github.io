@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "org": "org-name",
+    "submissionDate": "2025-01-15T00:00:00Z",
+    "reportingPeriod": {
+      "start": "2025-01-01T00:00:00Z",
+      "end": "2025-01-31T23:59:59Z"
+    },
+    "classification": "TLP:AMBER",
+    "dataSource": "incident-response",
+    "recordCount": 1
+  },
+  "dataType": "incident",
+  "data": [
+    {
+      "id": "inc-2025-001",
+      "organization": "Regional Hospital Network",
+      "sector": "hospital",
+      "incidentDate": "2025-01-14T01:00:00Z",
+      "discoveryDate": "2025-01-14T02:00:00Z",
+      "containmentDate": "2025-01-14T08:00:00Z",
+      "attackType": "ransomware",
+      "actorId": "ta-2025-001",
+      "malwareId": "mw-2025-001",
+      "techniquesUsed": ["T1566", "T1078", "T1486"],
+      "recordsCompromised": 0,
+      "financialImpact": 500000,
+      "operationalImpact": {
+        "systemsAffected": 150,
+        "downtime": 6,
+        "servicesImpacted": [
+          "Email system",
+          "File shares",
+          "Backup systems"
+        ]
+      },
+      "patientCareImpact": "minimal",
+      "dataSource": "incident-response-team",
+      "org": "org-name",
+      "telemetryDate": "2025-01-14T12:00:00Z",
+      "responseActions": [
+        "Network isolation",
+        "System restoration from backups",
+        "Forensic investigation",
+        "Law enforcement notification"
+      ],
+      "lessonsLearned": [
+        "Need for offline backups",
+        "Improve network segmentation",
+        "Enhanced monitoring of RDP access"
+      ],
+      "notes": "Attack prevented from spreading to clinical systems"
+    }
+  ]
+}

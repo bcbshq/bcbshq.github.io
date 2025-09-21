@@ -1,0 +1,65 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "org": "org-name",
+    "submissionDate": "2025-01-15T00:00:00Z",
+    "reportingPeriod": {
+      "start": "2025-01-01T00:00:00Z",
+      "end": "2025-01-31T23:59:59Z"
+    },
+    "classification": "TLP:GREEN",
+    "dataSource": "siem-correlation",
+    "recordCount": 2
+  },
+  "dataType": "technique",
+  "data": [
+    {
+      "techniqueId": "T1566",
+      "name": "Phishing",
+      "tactic": ["Initial Access"],
+      "observedDate": "2025-01-10T14:30:00Z",
+      "actorId": "ta-2025-001",
+      "malwareId": "mw-2025-001",
+      "frequency": 15,
+      "severity": "high",
+      "detectionMethods": [
+        "Email gateway alerts",
+        "User reporting",
+        "Sandbox detonation"
+      ],
+      "mitigationStrategies": [
+        "User training",
+        "Email filtering",
+        "MFA enforcement"
+      ],
+      "dataSource": "email-security",
+      "org": "org-name",
+      "telemetryDate": "2025-01-10T14:30:00Z",
+      "notes": "Increased phishing attempts using healthcare themes"
+    },
+    {
+      "techniqueId": "T1486",
+      "name": "Data Encrypted for Impact",
+      "tactic": ["Impact"],
+      "observedDate": "2025-01-14T02:00:00Z",
+      "actorId": "ta-2025-001",
+      "malwareId": "mw-2025-001",
+      "frequency": 3,
+      "severity": "critical",
+      "detectionMethods": [
+        "File system monitoring",
+        "Backup integrity checks",
+        "EDR alerts"
+      ],
+      "mitigationStrategies": [
+        "Immutable backups",
+        "Network segmentation",
+        "Incident response plan"
+      ],
+      "dataSource": "edr-telemetry",
+      "org": "org-name",
+      "telemetryDate": "2025-01-14T02:00:00Z",
+      "notes": "Ransomware encryption detected and contained"
+    }
+  ]
+}

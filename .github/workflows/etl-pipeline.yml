@@ -1,0 +1,90 @@
+# .github/workflows/etl-pipeline.yml
+name: Process Threat Intelligence Data
+
+on:
+  schedule:
+    # Run every Monday at 2 AM UTC
+    - cron: '0 2 * * 1'
+  push:
+    paths:
+      - 'data/input/**/*.json'
+  workflow_dispatch:
+    inputs:
+      dedup_strategy:
+        description: 'Deduplication Strategy'
+        required: false
+        default: 'merge'
+        type: choice
+        options:
+          - merge
+          - latest
+          - aggregate
+      agg_period:
+        description: 'Aggregation Period'
+        required: false
+        default: 'monthly'
+        type: choice
+        options:
+          - daily
+          - weekly
+          - monthly
+          - quarterly
+
+jobs:
+  validate-and-process:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Validate submissions
+      run: npm run validate
+      continue-on-error: false
+    
+    - name: Run ETL pipeline
+      run: npm run etl
+      env:
+        DEDUP_STRATEGY: ${{ inputs.dedup_strategy || 'merge' }}
+        AGG_PERIOD: ${{ inputs.agg_period || 'monthly' }}
+        ARCHIVE_AFTER_PROCESS: 'false'
+    
+    - name: Generate statistics
+      run: npm run stats
+    
+    - name: Commit processed data
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add data/processed/
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update processed threat intelligence data [skip ci]" && git push)
+    
+    - name: Create summary
+      run: |
+        echo "## ETL Pipeline Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Processing Complete ✅" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ -f data/processed/metadata.json ]; then
+          echo "#### Statistics:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          cat data/processed/metadata.json | jq '.recordCounts' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Deploy to GitHub Pages
+      if: success() && github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        keep_files: true

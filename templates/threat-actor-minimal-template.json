@@ -1,0 +1,14 @@
+[
+  {
+    "actor": "Example RansomGroup",
+    "alt": "ExampleRG",
+    "type": "Ransomware Group",
+    "origin": "Unknown",
+    "activeSince": "2021-03-01",
+    "healthcareTargets": 5,
+    "motivation": "Financial",
+    "notable": "Compromised hospital X",
+    "ttps": "T1566, T1486",
+    "status": "Active"
+  }
+]

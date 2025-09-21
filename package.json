@@ -1,0 +1,34 @@
+{
+  "name": "threat-landscape",
+  "version": "1.0.0",
+  "description": "Modular Threat Landscape Platform",
+  "main": "index.js",
+  "scripts": {
+    "validate": "node scripts/validate-submissions.js",
+    "etl": "node scripts/run-etl.js",
+    "stats": "node scripts/generate-stats.js",
+    "serve": "npx http-server docs -p 8080",
+    "test": "node scripts/test-etl.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcbshq/bcbshq.github.io.git"
+  },
+  "keywords": [
+    "threat-intelligence",
+    "threat-landscape",
+    "cybersecurity",
+    "ETL"
+  ],
+  "author": "Travis Trimboli",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "fs-extra": "^11.2.0",
+    "glob": "^10.3.10",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

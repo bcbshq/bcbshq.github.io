@@ -1,10 +1,78 @@
-# Ignore everything
-*
+# Node.js
+node_modules/
 
-# But not these files...
-!.gitignore
-!index.html
-!README.md
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# ...even if they are in subdirectories
-!*/
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+ves-env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# Data and logs
+data/
+/data/processed/
+/data/archive/
+logs/
+*.log
+/*.log
+
+# Database
+*.db
+*.sqlite3
+
+# Cache
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables (add to existing .gitignore)
+.env
+.env.local
+.env.production
+.env.staging
+
+# API keys and secrets
+*.key
+secrets.txt
+api_keys.txt
+*.bak
+
+# Extra
+/scripts/bootstrap_project.sh
