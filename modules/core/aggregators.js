@@ -55,13 +55,13 @@ class DataAggregators {
       const key = t.techniqueId;
       
       if (!unique.has(key)) {
-        t.orgsReporting = [t.subsidiary];
+        t.orgsReporting = [t.org];
         unique.set(key, t);
       } else if (strategy === 'aggregate') {
         const existing = unique.get(key);
         existing.aggregatedFrequency = (existing.aggregatedFrequency || 1) + (t.frequency || 1);
         existing.orgsReporting = [
-          ...new Set([...(existing.orgsReporting || []), t.subsidiary])
+          ...new Set([...(existing.orgsReporting || []), t.org])
         ];
         // Keep the highest severity
         if (this.compareSeverity(t.severity, existing.severity) > 0) {
@@ -106,7 +106,7 @@ class DataAggregators {
       const key = v.vectorType;
       
       if (!unique.has(key)) {
-        v.orgsReporting = [v.subsidiary];
+        v.orgsReporting = [v.org];
         unique.set(key, v);
       } else if (strategy === 'aggregate') {
         const existing = unique.get(key);
@@ -115,7 +115,7 @@ class DataAggregators {
         existing.actorsUsing = [...new Set([...(existing.actorsUsing || []), ...(v.actorsUsing || [])])];
         existing.targetedAssets = [...new Set([...(existing.targetedAssets || []), ...(v.targetedAssets || [])])];
         existing.orgsReporting = [
-          ...new Set([...(existing.orgsReporting || []), v.subsidiary])
+          ...new Set([...(existing.orgsReporting || []), v.org])
         ];
         unique.set(key, existing);
       }
@@ -129,7 +129,7 @@ class DataAggregators {
     const aggregated = actors.map(actor => ({
       ...actor,
       reportingPeriod: this.getPeriod(actor.telemetryDate, period),
-      orgsReporting: actor.orgsReporting || [actor.subsidiary],
+      orgsReporting: actor.orgsReporting || [actor.org],
       observationCount: 1
     }));
     
@@ -141,7 +141,7 @@ class DataAggregators {
       ...m,
       reportingPeriod: this.getPeriod(m.telemetryDate, period),
       prevalence: this.calculatePrevalence(malware, m.name),
-      orgsReporting: m.orgsReporting || [m.subsidiary]
+      orgsReporting: m.orgsReporting || [m.org]
     }));
   }
 
@@ -280,8 +280,8 @@ class DataAggregators {
       firstSeen: this.earliestDate(existing.firstSeen, newActor.firstSeen),
       lastSeen: this.latestDate(existing.lastSeen, newActor.lastSeen),
       orgsReporting: [...new Set([
-        ...(existing.orgsReporting || [existing.subsidiary]),
-        ...(newActor.orgsReporting || [newActor.subsidiary])
+        ...(existing.orgsReporting || [existing.org]),
+        ...(newActor.orgsReporting || [newActor.org])
       ])]
     };
   }
@@ -305,8 +305,8 @@ class DataAggregators {
       firstSeen: this.earliestDate(existing.firstSeen, newMalware.firstSeen),
       lastSeen: this.latestDate(existing.lastSeen, newMalware.lastSeen),
       orgsReporting: [...new Set([
-        ...(existing.orgsReporting || [existing.subsidiary]),
-        ...(newMalware.orgsReporting || [newMalware.subsidiary])
+        ...(existing.orgsReporting || [existing.org]),
+        ...(newMalware.orgsReporting || [newMalware.org])
       ])]
     };
   }
@@ -319,8 +319,8 @@ class DataAggregators {
       impactScore: Math.max(existing.impactScore || 0, newIncident.impactScore || 0),
       techniquesUsed: [...new Set([...(existing.techniquesUsed || []), ...(newIncident.techniquesUsed || [])])],
       orgsReporting: [...new Set([
-        ...(existing.orgsReporting || [existing.subsidiary]),
-        ...(newIncident.orgsReporting || [newIncident.subsidiary])
+        ...(existing.orgsReporting || [existing.org]),
+        ...(newIncident.orgsReporting || [newIncident.org])
       ])]
     };
   }

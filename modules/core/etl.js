@@ -70,31 +70,31 @@ class ThreatIntelETL {
       attackVectors: []
     };
 
-    for (const subsidiary of this.config.orgs) {
-      const subsidiaryPath = path.join(this.config.inputDirectory, subsidiary);
+    for (const org of this.config.orgs) {
+      const orgPath = path.join(this.config.inputDirectory, org);
       
-      // Check if subsidiary directory exists
-      if (!await fs.pathExists(subsidiaryPath)) {
-        console.warn(`Subsidiary directory not found: ${subsidiaryPath}`);
+      // Check if org directory exists
+      if (!await fs.pathExists(orgPath)) {
+        console.warn(`org directory not found: ${orgPath}`);
         continue;
       }
       
-      // Read JSON files from subsidiary directory
-      const files = await fs.readdir(subsidiaryPath);
+      // Read JSON files from org directory
+      const files = await fs.readdir(orgPath);
       
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
         
-        const filePath = path.join(subsidiaryPath, file);
+        const filePath = path.join(orgPath, file);
         
         try {
           const content = await fs.readJson(filePath);
           
-          // Add subsidiary info to each record
+          // Add org info to each record
           if (content.data && Array.isArray(content.data)) {
             content.data = content.data.map(record => ({
               ...record,
-              subsidiary: subsidiary,
+              org: org,
               sourceFile: file,
               extractedAt: new Date().toISOString()
             }));
@@ -147,7 +147,7 @@ class ThreatIntelETL {
       if (validation.valid) {
         validated.threatActors.push(validation.data);
       } else {
-        console.warn(`Invalid threat actor from ${actor.subsidiary}:`, validation.errors);
+        console.warn(`Invalid threat actor from ${actor.org}:`, validation.errors);
       }
     }
 
@@ -156,7 +156,7 @@ class ThreatIntelETL {
       if (validation.valid) {
         validated.malware.push(validation.data);
       } else {
-        console.warn(`Invalid malware from ${malware.subsidiary}:`, validation.errors);
+        console.warn(`Invalid malware from ${malware.org}:`, validation.errors);
       }
     }
 
@@ -165,7 +165,7 @@ class ThreatIntelETL {
       if (validation.valid) {
         validated.techniques.push(validation.data);
       } else {
-        console.warn(`Invalid technique from ${technique.subsidiary}:`, validation.errors);
+        console.warn(`Invalid technique from ${technique.org}:`, validation.errors);
       }
     }
 
@@ -174,7 +174,7 @@ class ThreatIntelETL {
       if (validation.valid) {
         validated.incidents.push(validation.data);
       } else {
-        console.warn(`Invalid incident from ${incident.subsidiary}:`, validation.errors);
+        console.warn(`Invalid incident from ${incident.org}:`, validation.errors);
       }
     }
 
@@ -183,7 +183,7 @@ class ThreatIntelETL {
       if (validation.valid) {
         validated.attackVectors.push(validation.data);
       } else {
-        console.warn(`Invalid attack vector from ${vector.subsidiary}:`, validation.errors);
+        console.warn(`Invalid attack vector from ${vector.org}:`, validation.errors);
       }
     }
 
@@ -295,22 +295,22 @@ class ThreatIntelETL {
     await fs.ensureDir(archivePath);
 
     // Move processed input files to archive
-    for (const subsidiary of this.config.orgs) {
-      const subsidiaryPath = path.join(this.config.inputDirectory, subsidiary);
+    for (const org of this.config.orgs) {
+      const orgPath = path.join(this.config.inputDirectory, org);
       
-      if (!await fs.pathExists(subsidiaryPath)) continue;
+      if (!await fs.pathExists(orgPath)) continue;
       
-      const files = await fs.readdir(subsidiaryPath);
+      const files = await fs.readdir(orgPath);
       
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
         
-        const source = path.join(subsidiaryPath, file);
-        const dest = path.join(archivePath, `${subsidiary}-${file}`);
+        const source = path.join(orgPath, file);
+        const dest = path.join(archivePath, `${org}-${file}`);
         
         try {
           await fs.move(source, dest, { overwrite: true });
-          console.log(`Archived ${subsidiary}/${file}`);
+          console.log(`Archived ${org}/${file}`);
         } catch (error) {
           console.error(`Failed to archive ${source}:`, error.message);
         }

@@ -2,6 +2,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const Ajv = require('ajv');
+const addFormats = require('ajv-formats');
 
 async function validateSubmissions() {
   console.log('='.repeat(60));
@@ -9,11 +10,12 @@ async function validateSubmissions() {
   console.log('='.repeat(60));
   console.log('');
 
-  const ajv = new Ajv({ 
+  const ajv = new Ajv({
     allErrors: true,
     verbose: true,
     strict: false
   });
+  addFormats(ajv);
 
   try {
     // Load schemas
@@ -25,15 +27,15 @@ async function validateSubmissions() {
     const inputDir = path.join(__dirname, '../data/input');
     await fs.ensureDir(inputDir);
     
-    const subsidiaries = await getSubsidiaries(inputDir);
+    const orgs = await getOrgs(inputDir);
     
-    if (subsidiaries.length === 0) {
+    if (orgs.length === 0) {
       console.log('No org directories found to validate.');
       return;
     }
 
-    console.log(`Found ${subsidiaries.length} subsidiaries to validate:`);
-    console.log(subsidiaries.map(s => `  - ${s}`).join('\n'));
+    console.log(`Found ${orgs.length} orgs to validate:`);
+    console.log(orgs.map(s => `  - ${s}`).join('\n'));
     console.log('');
 
     let totalFiles = 0;
@@ -42,7 +44,7 @@ async function validateSubmissions() {
     const errors = [];
 
     // Validate each org's submissions
-    for (const org of subsidiaries) {
+    for (const org of orgs) {
       console.log(`\nValidating ${org}:`);
       console.log('-'.repeat(40));
       
@@ -272,7 +274,7 @@ async function validateFile(content, schemas, ajv) {
   return result;
 }
 
-async function getSubsidiaries(inputDir) {
+async function getOrgs(inputDir) {
   const entries = await fs.readdir(inputDir, { withFileTypes: true });
   return entries
     .filter(entry => entry.isDirectory())

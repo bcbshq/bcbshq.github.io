@@ -5,22 +5,22 @@ const { ThreatIntelETL } = require('../modules/core/etl');
 
 async function runETL() {
   console.log('='.repeat(60));
-  console.log('Healthcare Threat Intelligence ETL Pipeline');
+  console.log('Threat Landscape ETL Pipeline');
   console.log('='.repeat(60));
   console.log(`Start time: ${new Date().toISOString()}`);
   console.log('');
 
   try {
-    // Get list of subsidiaries
-    const subsidiaries = await getOrgList();
+    // Get list of orgs
+    const orgs = await getOrgList();
     
-    if (subsidiaries.length === 0) {
+    if (orgs.length === 0) {
       console.warn('No org directories found in data/input/');
       console.log('Please ensure org data is placed in data/input/{org-name}/');
       process.exit(0);
     }
 
-    console.log(`Found ${subsidiaries.length} subsidiaries:`, subsidiaries.join(', '));
+    console.log(`Found ${orgs.length} orgs:`, orgs.join(', '));
     console.log('');
 
     // Configure ETL
@@ -28,7 +28,7 @@ async function runETL() {
       inputDirectory: path.join(__dirname, '../data/input'),
       outputDirectory: path.join(__dirname, '../data/processed'),
       archiveDirectory: path.join(__dirname, '../data/archive'),
-      subsidiaries: subsidiaries,
+      orgs: orgs,
       deduplicationStrategy: process.env.DEDUP_STRATEGY || 'merge',
       aggregationPeriod: process.env.AGG_PERIOD || 'monthly'
     };
@@ -59,7 +59,7 @@ async function runETL() {
     
     // Archive if configured
     if (process.env.ARCHIVE_AFTER_PROCESS === 'true') {
-      await archiveRawData(config.archiveDirectory, subsidiaries);
+      await archiveRawData(config.archiveDirectory, orgs);
     }
 
     console.log(`End time: ${new Date().toISOString()}`);
@@ -76,7 +76,7 @@ async function runETL() {
   }
 }
 
-async function getorgList() {
+async function getOrgList() {
   const inputDir = path.join(__dirname, '../data/input');
   
   // Ensure directory exists
@@ -89,7 +89,7 @@ async function getorgList() {
     .filter(name => !name.startsWith('.')); // Ignore hidden directories
 }
 
-async function archiveRawData(archiveDir, subsidiaries) {
+async function archiveRawData(archiveDir, orgs) {
   const now = new Date();
   const archivePath = path.join(
     archiveDir,
@@ -103,7 +103,7 @@ async function archiveRawData(archiveDir, subsidiaries) {
 
   const inputDir = path.join(__dirname, '../data/input');
   
-  for (const org of subsidiaries) {
+  for (const org of orgs) {
     const subDir = path.join(inputDir, org);
     const files = await fs.readdir(subDir);
     
