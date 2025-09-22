@@ -129,6 +129,29 @@ async function loadSchemas() {
   
   // Define default schemas if files don't exist
   const defaultSchemas = {
+    'base': {
+      type: 'object',
+      required: ['metadata', 'dataType', 'data'],
+      properties: {
+        metadata: {
+          type: 'object',
+          required: ['version', 'org', 'submissionDate'],
+          properties: {
+            version: { type: 'string', pattern: '^\\d+\\.\\d+$' },
+            org: { type: 'string', pattern: '^[a-zA-Z0-9-_]+$' },
+            submissionDate: { type: 'string', format: 'date-time' }
+          }
+        },
+        dataType: { 
+          type: 'string',
+          enum: ['threatActor', 'malware', 'technique', 'incident', 'attackVector']
+        },
+        data: {
+          type: 'array',
+          minItems: 1
+        }
+      }
+    },
     'threat-actor': {
       type: 'object',
       required: ['metadata', 'dataType', 'data'],
@@ -227,7 +250,20 @@ async function validateFile(content, schemas, ajv) {
     errors: []
   };
 
-  // Check basic structure
+  // First validate against base schema
+  const baseSchema = schemas['base'];
+  if (baseSchema) {
+    const validate = ajv.compile(baseSchema);
+    const valid = validate(content);
+    if (!valid) {
+      result.errors.push(...validate.errors.map(e => `Base schema: ${e.message} at ${e.instancePath}`));
+      return result;
+    }
+  } else {
+    console.warn('Base schema not found, skipping base validation');
+  }
+
+  // Check basic structure after base validation
   if (!content.metadata) {
     result.errors.push('Missing metadata section');
     return result;

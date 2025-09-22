@@ -14,17 +14,28 @@ class ThreatIntelETL {
       archiveDirectory: config.archiveDirectory || './data/archive',
       orgs: config.orgs || [],
       deduplicationStrategy: config.deduplicationStrategy || 'merge',
-      aggregationPeriod: config.aggregationPeriod || 'monthly'
+      aggregationPeriod: config.aggregationPeriod || 'monthly',
+      validateWithBaseSchema: config.validateWithBaseSchema !== false // Default true
     };
     
     this.validators = new DataValidators();
     this.transformers = new DataTransformers();
     this.aggregators = new DataAggregators();
+    
+    // Track validation statistics
+    this.validationStats = {
+      totalFiles: 0,
+      validFiles: 0,
+      invalidFiles: 0,
+      warnings: [],
+      errors: []
+    };
   }
 
   async processIncomingData() {
     console.log('Starting ETL process...');
     console.log('Processing Orgs:', this.config.orgs);
+    console.log('Base Schema Validation:', this.config.validateWithBaseSchema ? 'Enabled' : 'Disabled');
     
     try {
       // 1. Extract
@@ -34,6 +45,9 @@ class ThreatIntelETL {
       // 2. Validate
       const validatedData = await this.validateData(rawData);
       console.log('Validated data:', this.summarizeData(validatedData));
+      
+      // Display validation statistics
+      this.displayValidationStats();
       
       // 3. Transform
       const transformedData = await this.transformData(validatedData);
@@ -70,34 +84,69 @@ class ThreatIntelETL {
       attackVectors: []
     };
 
-    for (const org of this.config.orgs) {
-      const orgPath = path.join(this.config.inputDirectory, org);
+    // Load base schema if validation is enabled
+    if (this.config.validateWithBaseSchema) {
+      await this.validators.loadBaseSchema();
+    }
+
+    for (const subsidiary of this.config.orgs) {
+      const subsidiaryPath = path.join(this.config.inputDirectory, subsidiary);
       
-      // Check if org directory exists
-      if (!await fs.pathExists(orgPath)) {
-        console.warn(`org directory not found: ${orgPath}`);
+      // Check if subsidiary directory exists
+      if (!await fs.pathExists(subsidiaryPath)) {
+        console.warn(`Subsidiary directory not found: ${subsidiaryPath}`);
         continue;
       }
       
-      // Read JSON files from org directory
-      const files = await fs.readdir(orgPath);
+      // Read JSON files from subsidiary directory
+      const files = await fs.readdir(subsidiaryPath);
       
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
         
-        const filePath = path.join(orgPath, file);
+        const filePath = path.join(subsidiaryPath, file);
+        this.validationStats.totalFiles++;
         
         try {
           const content = await fs.readJson(filePath);
           
-          // Add org info to each record
+          // Validate submission structure if base schema validation is enabled
+          if (this.config.validateWithBaseSchema) {
+            const structureValidation = await this.validators.validateSubmissionStructure(content);
+            
+            if (!structureValidation.valid) {
+              console.error(`Invalid submission structure in ${filePath}:`);
+              structureValidation.errors.forEach(e => console.error(`  - ${e}`));
+              this.validationStats.invalidFiles++;
+              this.validationStats.errors.push({
+                file: `${subsidiary}/${file}`,
+                errors: structureValidation.errors
+              });
+              continue; // Skip this file
+            }
+          }
+          
+          this.validationStats.validFiles++;
+          
+          // Add subsidiary info to each record
           if (content.data && Array.isArray(content.data)) {
             content.data = content.data.map(record => ({
               ...record,
-              org: org,
+              subsidiary: subsidiary,
               sourceFile: file,
-              extractedAt: new Date().toISOString()
+              extractedAt: new Date().toISOString(),
+              schemaVersion: content.metadata?.version || '1.0'
             }));
+          }
+          
+          // Check for record count mismatch
+          if (content.metadata?.recordCount !== undefined && 
+              content.data && 
+              content.metadata.recordCount !== content.data.length) {
+            this.validationStats.warnings.push({
+              file: `${subsidiary}/${file}`,
+              warning: `Record count mismatch: declared ${content.metadata.recordCount}, actual ${content.data.length}`
+            });
           }
           
           // Categorize by data type
@@ -119,9 +168,18 @@ class ThreatIntelETL {
               break;
             default:
               console.warn(`Unknown data type in ${filePath}: ${content.dataType}`);
+              this.validationStats.warnings.push({
+                file: `${subsidiary}/${file}`,
+                warning: `Unknown data type: ${content.dataType}`
+              });
           }
         } catch (error) {
           console.error(`Error processing ${filePath}:`, error.message);
+          this.validationStats.invalidFiles++;
+          this.validationStats.errors.push({
+            file: `${subsidiary}/${file}`,
+            errors: [error.message]
+          });
         }
       }
     }
@@ -147,7 +205,7 @@ class ThreatIntelETL {
       if (validation.valid) {
         validated.threatActors.push(validation.data);
       } else {
-        console.warn(`Invalid threat actor from ${actor.org}:`, validation.errors);
+        console.warn(`Invalid threat actor from ${actor.subsidiary}:`, validation.errors);
       }
     }
 
@@ -156,34 +214,56 @@ class ThreatIntelETL {
       if (validation.valid) {
         validated.malware.push(validation.data);
       } else {
-        console.warn(`Invalid malware from ${malware.org}:`, validation.errors);
+        console.warn(`Invalid malware from ${malware.subsidiary}:`, validation.errors);
       }
     }
 
     for (const technique of data.techniques) {
       const validation = this.validators.validateRecord(technique, schemas.technique);
       if (validation.valid) {
+        // Additional MITRE ATT&CK validation
+        if (technique.techniqueId && !this.validators.validateTechniqueId(technique.techniqueId)) {
+          console.warn(`Invalid MITRE technique ID: ${technique.techniqueId}`);
+        }
         validated.techniques.push(validation.data);
       } else {
-        console.warn(`Invalid technique from ${technique.org}:`, validation.errors);
+        console.warn(`Invalid technique from ${technique.subsidiary}:`, validation.errors);
       }
     }
 
     for (const incident of data.incidents) {
       const validation = this.validators.validateRecord(incident, schemas.incident);
       if (validation.valid) {
+        // Additional date range validation for incidents
+        if (incident.incidentDate && incident.resolutionDate) {
+          const dateValidation = this.validators.validateDateRange(
+            incident.incidentDate, 
+            incident.resolutionDate
+          );
+          if (!dateValidation.valid) {
+            console.warn(`Invalid date range in incident ${incident.id}: ${dateValidation.error}`);
+          }
+        }
         validated.incidents.push(validation.data);
       } else {
-        console.warn(`Invalid incident from ${incident.org}:`, validation.errors);
+        console.warn(`Invalid incident from ${incident.subsidiary}:`, validation.errors);
       }
     }
 
     for (const vector of data.attackVectors) {
       const validation = this.validators.validateRecord(vector, schemas.attackVector);
       if (validation.valid) {
+        // Additional CVE validation if present
+        if (vector.exploitedVulnerabilities) {
+          vector.exploitedVulnerabilities.forEach(vuln => {
+            if (vuln.cve && !this.validators.validateCVE(vuln.cve)) {
+              console.warn(`Invalid CVE format: ${vuln.cve}`);
+            }
+          });
+        }
         validated.attackVectors.push(validation.data);
       } else {
-        console.warn(`Invalid attack vector from ${vector.org}:`, validation.errors);
+        console.warn(`Invalid attack vector from ${vector.subsidiary}:`, validation.errors);
       }
     }
 
@@ -194,7 +274,11 @@ class ThreatIntelETL {
     const schemas = {};
     const schemaDir = path.join(__dirname, '../../data/schemas');
     
+    // Ensure schema directory exists
+    await fs.ensureDir(schemaDir);
+    
     const schemaFiles = {
+      base: 'base-submission-schema.json',
       threatActor: 'threat-actor-schema.json',
       malware: 'malware-schema.json',
       technique: 'technique-schema.json',
@@ -206,6 +290,7 @@ class ThreatIntelETL {
       const schemaPath = path.join(schemaDir, file);
       if (await fs.pathExists(schemaPath)) {
         schemas[key] = await fs.readJson(schemaPath);
+        console.log(`Loaded schema: ${file}`);
       } else {
         console.warn(`Schema file not found: ${schemaPath}`);
         schemas[key] = { fields: {} }; // Empty schema as fallback
@@ -216,17 +301,28 @@ class ThreatIntelETL {
   }
 
   async transformData(data) {
+    // Sanitize all data before transformation
+    const sanitized = {
+      threatActors: this.validators.sanitizeData(data.threatActors),
+      malware: this.validators.sanitizeData(data.malware),
+      techniques: this.validators.sanitizeData(data.techniques),
+      incidents: this.validators.sanitizeData(data.incidents),
+      attackVectors: this.validators.sanitizeData(data.attackVectors)
+    };
+
     return {
-      threatActors: this.transformers.normalizeActors(data.threatActors),
-      malware: this.transformers.normalizeMalware(data.malware),
-      techniques: this.transformers.normalizeTechniques(data.techniques),
-      incidents: this.transformers.normalizeIncidents(data.incidents),
-      attackVectors: this.transformers.normalizeVectors(data.attackVectors)
+      threatActors: this.transformers.normalizeActors(sanitized.threatActors),
+      malware: this.transformers.normalizeMalware(sanitized.malware),
+      techniques: this.transformers.normalizeTechniques(sanitized.techniques),
+      incidents: this.transformers.normalizeIncidents(sanitized.incidents),
+      attackVectors: this.transformers.normalizeVectors(sanitized.attackVectors)
     };
   }
 
   async deduplicateData(data) {
     const strategy = this.config.deduplicationStrategy;
+    
+    console.log(`Deduplication strategy: ${strategy}`);
     
     return {
       threatActors: this.aggregators.deduplicateActors(data.threatActors, strategy),
@@ -240,6 +336,8 @@ class ThreatIntelETL {
   async aggregateData(data) {
     const period = this.config.aggregationPeriod;
     
+    console.log(`Aggregation period: ${period}`);
+    
     return {
       threatActors: this.aggregators.aggregateActors(data.threatActors, period),
       malware: this.aggregators.aggregateMalware(data.malware, period),
@@ -251,6 +349,9 @@ class ThreatIntelETL {
         processedDate: new Date().toISOString(),
         period: period,
         orgs: this.config.orgs,
+        deduplicationStrategy: this.config.deduplicationStrategy,
+        schemaValidation: this.config.validateWithBaseSchema,
+        validationStats: this.validationStats,
         recordCounts: {
           threatActors: data.threatActors.length,
           malware: data.malware.length,
@@ -282,6 +383,13 @@ class ThreatIntelETL {
       await fs.writeJson(outputPath, file.data, { spaces: 2 });
       console.log(`Saved ${file.name} (${Array.isArray(file.data) ? file.data.length : 1} records)`);
     }
+    
+    // Save validation report if there were issues
+    if (this.validationStats.errors.length > 0 || this.validationStats.warnings.length > 0) {
+      const validationReportPath = path.join(this.config.outputDirectory, 'validation-report.json');
+      await fs.writeJson(validationReportPath, this.validationStats, { spaces: 2 });
+      console.log('Saved validation-report.json');
+    }
   }
 
   async archiveProcessedFiles() {
@@ -295,27 +403,51 @@ class ThreatIntelETL {
     await fs.ensureDir(archivePath);
 
     // Move processed input files to archive
-    for (const org of this.config.orgs) {
-      const orgPath = path.join(this.config.inputDirectory, org);
+    for (const subsidiary of this.config.orgs) {
+      const subsidiaryPath = path.join(this.config.inputDirectory, subsidiary);
       
-      if (!await fs.pathExists(orgPath)) continue;
+      if (!await fs.pathExists(subsidiaryPath)) continue;
       
-      const files = await fs.readdir(orgPath);
+      const files = await fs.readdir(subsidiaryPath);
       
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
         
-        const source = path.join(orgPath, file);
-        const dest = path.join(archivePath, `${org}-${file}`);
+        const source = path.join(subsidiaryPath, file);
+        const dest = path.join(archivePath, `${subsidiary}-${file}`);
         
         try {
           await fs.move(source, dest, { overwrite: true });
-          console.log(`Archived ${org}/${file}`);
+          console.log(`Archived ${subsidiary}/${file}`);
         } catch (error) {
           console.error(`Failed to archive ${source}:`, error.message);
         }
       }
     }
+  }
+
+  displayValidationStats() {
+    console.log('\nValidation Statistics:');
+    console.log('-'.repeat(40));
+    console.log(`Total files processed: ${this.validationStats.totalFiles}`);
+    console.log(`Valid files: ${this.validationStats.validFiles}`);
+    console.log(`Invalid files: ${this.validationStats.invalidFiles}`);
+    
+    if (this.validationStats.warnings.length > 0) {
+      console.log(`\nWarnings (${this.validationStats.warnings.length}):`);
+      this.validationStats.warnings.forEach(w => {
+        console.log(`  [${w.file}] ${w.warning}`);
+      });
+    }
+    
+    if (this.validationStats.errors.length > 0) {
+      console.log(`\nErrors (${this.validationStats.errors.length}):`);
+      this.validationStats.errors.forEach(e => {
+        console.log(`  [${e.file}]`);
+        e.errors.forEach(err => console.log(`    - ${err}`));
+      });
+    }
+    console.log('-'.repeat(40));
   }
 
   // Helper methods
